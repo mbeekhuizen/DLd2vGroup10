@@ -1,6 +1,6 @@
 import pywt
 import numpy as np
- #Method should output 2 vectors of 100x38
+ #Method should output 2 vectors of 100x19
 def gen_wavelet(data):
     ncol = data.shape[1]
     nrow = data.shape[0]

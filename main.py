@@ -7,6 +7,7 @@ from tcn_model import TCN
 from torch import nn
 from torch import optim
 import random
+import copy
 
 
 def print_hi(name):
@@ -69,9 +70,11 @@ if __name__ == '__main__':
             temp = torch.tensor(df.to_numpy())
             temp2 = torch.reshape(temp, (200, 1, 38))
             model = model.double()
-            output, d = model(temp2, df.to_numpy())
+            orioutput = model(temp2, df.to_numpy())
+            posoutput = model(torch.reshape(torch.tensor(positive.to_numpy()), (200, 1, 38)), positive.to_numpy())
+            negoutput = model(torch.reshape(torch.tensor(negative.to_numpy()), (200, 1, 38)), negative.to_numpy())
 
-            loss = criterion(output, positive, negative)
+            loss = criterion(orioutput, posoutput, negoutput)
             loss.backward()
             optimizer.step()
 

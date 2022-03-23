@@ -6,6 +6,8 @@ from wavelet import gen_wavelet
 
 
 class TCN(nn.Module):
+
+
     def __init__(self, input_channels, wavelet, input_length, output_size, kernel_size, channel_lst, wavelet_output_size):
         super(TCN, self).__init__()
         self.input_size = input_channels

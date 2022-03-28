@@ -12,6 +12,7 @@ import pickle as pkl
 import random
 import copy
 
+random.seed(25)
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -55,6 +56,20 @@ def getNegative(currLabel, data):
         if newLabel != currLabel:
             return randomFrame
 
+#Returns an array of k length of (xTrain, yTrain, xTest, yTest)
+def kFoldCrossValidation(k, x, y):
+    allFolds = []
+    testLength = len(x) // k
+    for i in range(0, k):
+        begin = i * testLength
+        end = (i+1) * testLength
+        xTest = x[begin:end]
+        yTest = y[begin:end]
+        xTrain = np.concatenate((x[:begin], x[end:]), axis=0)
+        yTrain = y[:begin] + y[end:]
+        allFolds.append((xTrain, yTrain, xTest, yTest))
+    return allFolds
+
 #Trains the TCN model with 3/5 (user data) for each environment for each user. This results in 3 * 4 envir * 5 users = 60 data elements
 def trainModel(data):
     model = TCN(38, True, 200, 32, 16, '25,25,25,25,25,25,25,25', 19)
@@ -95,8 +110,10 @@ def pickleResults(model, data):
     testSet = []
     testLabels = []
     for df, i in data:
+        print(i)
         result = model(torch.reshape(torch.tensor(df.to_numpy()), (200, 1, 38)), df.to_numpy())
         testSet.append(result.detach().numpy().tolist())
+        testLabels.append(i)
 
     datas = np.array(testSet)
     # Pickle model results
@@ -105,6 +122,7 @@ def pickleResults(model, data):
         pkl.dump(datas, f)
     with open('pickle/yTrain.pkl', 'wb') as f:
         pkl.dump(testLabels, f)
+    print("All data saved!")
 
 # Run training of the model
 if __name__ == '__main__':
@@ -116,6 +134,7 @@ if __name__ == '__main__':
 
     #TODO create training split and test split
     data = create_data_frames()
+    len(data)
     train_data = data[:70]
     test_data = data[70:]
 
@@ -137,49 +156,70 @@ if __name__ == '__main__':
 
 
 
+    #Trains the classifier on the trainings data + hyperparameter tuning
     if sys.argv[1] == 'classifier':
         #Retrieve model data
         with open('pickle/xTrain.pkl', 'rb') as f:
-            datas = pkl.load(f)
+            xTrain = pkl.load(f)[:70]
         with open('pickle/yTrain.pkl', 'rb') as f:
-            testLabels = pkl.load(f)
+            yTrain = pkl.load(f)[:70]
 
 
 
-        maxacc = 999999999999999999999
-
-        iters = 10
+        maxAcc = 0
+        iters = 100
         numleaves = list(range(3, 50))
         numtrees =  list(range(10, 200, 10))
-        maxdepth = list(range(1,12))
+        maxdepth = list(range(2,24))
         mindatainleaf = list(range(1,10))
         for i in range(iters):
-            # Setup up LGBClassifier
-            train_data = lgb.Dataset(datas, label=testLabels)
-            param = {'num_leaves': random.choice(numleaves), 'num_trees': random.choice(numtrees), 'max_depth': random.choice(maxdepth),
-                     'num_classes': 5, 'min_data_in_leaf': random.choice(mindatainleaf),
-                     'objective': 'multiclass',
-                     'metric': {'multi_logloss'},
-                     }
+            # Apply 7 fold crossvalidation on training set of 70 data points
+            k = 7
+            allFolds = kFoldCrossValidation(k, xTrain, yTrain)
+            avgAccuracy = 0
+            for fold in allFolds:
+                #Train classifier on current fold
+                classifierTrain = lgb.Dataset(fold[0], label=fold[1])
+                param = {'num_leaves': random.choice(numleaves), 'num_trees': random.choice(numtrees), 'max_depth': random.choice(maxdepth),
+                         'num_classes': 5, 'min_data_in_leaf': random.choice(mindatainleaf),
+                         'objective': 'multiclass','verbose': -1,
+                         'metric': {'multi_logloss'},
+                         }
+                bst = lgb.train(param, classifierTrain)
+                #Evaluate classifier on current fold
+                accuracy = 0
 
-            bst = lgb.train(param, train_data)
-
-            accuracy = 0
-            for df, i in test_data:
-
-                yTrain = i - 1
-                result = model(torch.reshape(torch.tensor(df.to_numpy()), (200, 1, 38)), df.to_numpy())
-                prediction = bst.predict(np.array([result.detach().numpy()]))
-                yTest = prediction.argmax()
-                print(yTest)
-                if yTest == yTrain:
-                    print("Yay! Correct")
-                    accuracy += 1
-            resacc = accuracy / 25
-            if resacc < maxacc:
-                maxacc = resacc
+                for xTest, yTest in zip(fold[2], fold[3]):
+                    prediction = bst.predict(np.array([xTest]))
+                    maxPrediction = prediction.argmax()
+                    if maxPrediction == yTest:
+                        accuracy += 1
+                accuracy = accuracy / len(fold[2])
+                avgAccuracy += accuracy
+            avgAccuracy = avgAccuracy / k
+            if avgAccuracy > maxAcc:
+                print(f"New iteration better then before:{avgAccuracy} better than {maxAcc}")
+                maxAcc = avgAccuracy
                 # Save classifier model
                 bst.save_model('./classifierModel.txt')
+            print(f"{i}, {avgAccuracy}")
+
+        print(f"Best avg accuracy was {maxAcc}")
+            #Evaluate accuracy of training based on
+            # for df, i in test_data:
+            #     yTrain = i - 1
+            #     result = model(torch.reshape(torch.tensor(df.to_numpy()), (200, 1, 38)), df.to_numpy())
+            #     prediction = bst.predict(np.array([result.detach().numpy()]))
+            #     yTest = prediction.argmax()
+            #     print(yTest)
+            #     if yTest == yTrain:
+            #         print("Yay! Correct")
+            #         accuracy += 1
+            # resacc = accuracy / 25
+            # if resacc < maxacc:
+            #     maxacc = resacc
+            #     # Save classifier model
+            #     bst.save_model('./classifierModel.txt')
 
     print_hi('PyCharm')
 

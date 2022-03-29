@@ -66,7 +66,7 @@ def get_data_without_Turn_indicators(path):
     return d.drop([d.columns[0], 'INDICATORS', 'INDICATORS_ON_INTERSECTION'], axis=1)
 
 
-def create_data_frames(x):
+def create_data_frames_highway(x):
     data = []
 
     for i in range(1, 6):
@@ -291,25 +291,25 @@ def create_data_frame_urban(x):
 
     for i in range(1, 6):
         if x==0:
-            tempdata = get_data("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+            tempdata = get_data("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==1:
-            tempdata = get_data_with_highway_speed_acceleration_only("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+            tempdata = get_data_with_highway_speed_acceleration_only("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==2:
-            tempdata = get_data_without_distance_information("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+            tempdata = get_data_without_distance_information("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==3:
-            tempdata = get_data_without_lane_information("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+            tempdata = get_data_without_lane_information("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==4:
-                tempdata = get_data_without_acceleration_break_peda("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+                tempdata = get_data_without_acceleration_break_peda("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==5:
-                tempdata = get_data_without_speed("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+                tempdata = get_data_without_speed("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==6:
-                tempdata = get_data_without_gear_box("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+                tempdata = get_data_without_gear_box("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==7:
-                tempdata = get_data_without_acceleration("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+                tempdata = get_data_without_acceleration("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==8:
-                tempdata = get_data_without_SteeringWheel_roadAngle("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+                tempdata = get_data_without_SteeringWheel_roadAngle("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
         elif x==9:
-                tempdata = get_data_without_Turn_indicators("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+                tempdata = get_data_without_Turn_indicators("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
 
         list_df = np.array_split(tempdata, 5)
         for j in range(0, len(list_df)):

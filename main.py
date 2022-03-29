@@ -34,6 +34,85 @@ def create_data_frames():
     return data
 
 
+def create_data_frame_suburban():
+    data = []
+
+    for i in range(1, 6):
+        tempdata = get_data("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_suburban.csv")
+        list_df = np.array_split(tempdata, 5)
+        for j in range(0, len(list_df)):
+            data.append((list_df[j], i))
+
+    return data
+
+# data of driver 3 in tutorial is 323, using Gaussian noise on the samples for data augmentation
+# samples for driver 3,  from 323 increases to 1000
+def create_data_frame_tutorial():
+    data = []
+
+    for i in range(1, 6):
+        tempdata = get_data("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_tutorial.csv")
+
+        if i == 3:
+            list_df = np.split(tempdata, [200, 323])
+            for j in range(0, len(list_df)):
+                data.append((list_df[j], i))
+
+            copy_1 = copy.deepcopy(list_df[0])
+            copy_2 = copy.deepcopy(list_df[0])
+            copy_3 = copy.deepcopy(list_df[0])
+            copy_4 = copy.deepcopy(list_df[0])
+
+            # gaussian noise for data augmentation
+            # guassian distribution
+            mu, sigma = 0, 0.1
+            noise_1 = np.random.normal(mu, sigma, 7600)
+            noise_2 = np.random.normal(mu, sigma, 7600)
+            noise_3 = np.random.normal(mu, sigma, 7600)
+            noise_4 = np.random.normal(mu, sigma, 7600)
+
+            noice_matrix_1 = np.reshape(noise_1, (-1, 38))
+            noice_matrix_2 = np.reshape(noise_2, (-1, 38))
+            noice_matrix_3 = np.reshape(noise_3, (-1, 38))
+            noice_matrix_4 = np.reshape(noise_4, (-1, 38))
+
+            copy_1 = copy_1 + noice_matrix_1
+            copy_2 = copy_2 + noice_matrix_2
+            copy_3 = copy_3 + noice_matrix_3
+            copy_4 = copy_4 + noice_matrix_4
+            temp = np.split(copy_4, [77, 200])[0]
+
+            last = np.concatenate((list_df[1], temp), axis=0)
+
+            list_df_new = []
+            list_df_new.append(list_df[0])
+            list_df_new.append(copy_1)
+            list_df_new.append(copy_2)
+            list_df_new.append(copy_3)
+            list_df_new.append(last)
+
+            for j in range(0, len(list_df_new)):
+                data.append((list_df_new[j], i))
+
+        else:
+            list_df = np.array_split(tempdata, 5)
+            for j in range(0, len(list_df)):
+                data.append((list_df[j], i))
+
+    return data
+
+
+def create_data_frame_urban():
+    data = []
+
+    for i in range(1, 6):
+        tempdata = get_data("sample_data/user_000" + str(i) + "/user_000" + str(i) + "_urban.csv")
+        list_df = np.array_split(tempdata, 5)
+        for j in range(0, len(list_df)):
+            data.append((list_df[j], i))
+
+    return data
+
 def getPositive(currLabel, data, dataFrame):
     foundPositive = False
     while not foundPositive:

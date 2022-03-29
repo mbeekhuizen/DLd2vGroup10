@@ -128,7 +128,6 @@ def create_data_frame_suburban(x):
         for j in range(0, len(list_df)):
             data.append((list_df[j], i))
 
-    return data
 
     return data
 

@@ -10,6 +10,10 @@ import random
 import sys
 import pickle as pkl
 import random
+from tqdm import tqdm
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+import seaborn as sns
 import copy
 
 random.seed(25)
@@ -76,9 +80,9 @@ def trainModel(data):
     # model = TCN(39, False, 200, 5, 16, '32,32,32,32,32,32,32,32', 15)
     criterion = nn.TripletMarginLoss(margin=1, p=2)
     optimizer = optim.Adam(model.parameters(), lr=4E-4, weight_decay=0.975, amsgrad=True)
-    epochs = 2
+    epochs = 3
     # Train for n epochs
-    for i in range(epochs):
+    for i in tqdm(range(epochs)):
         # Loop through each data point
         for df, j, t in data:
             currLabel = j
@@ -164,6 +168,14 @@ if __name__ == '__main__':
         with open('pickle/yTrain.pkl', 'rb') as f:
             yTrain = pkl.load(f)[:70]
 
+        reduction = TSNE(n_components=2, random_state=150).fit_transform(xTrain)
+        reduction = reduction.T
+        plot = sns.scatterplot(x=reduction[0], y=reduction[1], hue=yTrain, palette= sns.color_palette("hls", 5))
+        plt.show()
+        fig = plot.get_figure()
+        fig.savefig("out.png")
+
+
 
 
         maxAcc = 0
@@ -172,6 +184,12 @@ if __name__ == '__main__':
         numtrees =  list(range(10, 200, 10))
         maxdepth = list(range(2,24))
         mindatainleaf = list(range(1,10))
+        # newData = []
+        # labels = []
+        # for df, label, t in data[70:]:
+        #     newData.append(df.to_numpy)
+        #     labels.append(label)
+        # newData = np.array(newData)
         for i in range(iters):
             # Apply 7 fold crossvalidation on training set of 70 data points
             k = 7
@@ -179,12 +197,20 @@ if __name__ == '__main__':
             avgAccuracy = 0
             for fold in allFolds:
                 #Train classifier on current fold
+
+
                 classifierTrain = lgb.Dataset(fold[0], label=fold[1])
                 param = {'num_leaves': random.choice(numleaves), 'num_trees': random.choice(numtrees), 'max_depth': random.choice(maxdepth),
-                         'num_classes': 5, 'min_data_in_leaf': random.choice(mindatainleaf),
-                         'objective': 'multiclass','verbose': -1,
+                         'num_classes': 5, 'min_data_in_leaf': random.choice(mindatainleaf), 'max_bin': 10,
+                         'objective': 'multiclass', 'verbose': -1,
                          'metric': {'multi_logloss'},
                          }
+                # param = {'num_leaves': 31, 'num_trees': 100,
+                #          'max_depth': 12,
+                #          'num_classes': 5, 'min_data_in_leaf': 1,
+                #          'objective': 'multiclass', 'verbose': -1,
+                #          'metric': {'multi_logloss'},
+                #          }
                 bst = lgb.train(param, classifierTrain)
                 #Evaluate classifier on current fold
                 accuracy = 0
@@ -199,6 +225,7 @@ if __name__ == '__main__':
             avgAccuracy = avgAccuracy / k
             if avgAccuracy > maxAcc:
                 print(f"New iteration better then before:{avgAccuracy} better than {maxAcc}")
+                print(f"Params: {param}")
                 maxAcc = avgAccuracy
                 # Save classifier model
                 bst.save_model('./classifierModel.txt')

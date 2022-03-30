@@ -94,7 +94,7 @@ def create_data_frames_highway(x):
 
         list_df = np.array_split(tempdata, 5)
         for j in range(0, len(list_df)):
-            data.append((list_df[j], i))
+            data.append((list_df[j], i-1, 'highway'))
 
     return data
 
@@ -126,7 +126,7 @@ def create_data_frame_suburban(x):
 
         list_df = np.array_split(tempdata, 5)
         for j in range(0, len(list_df)):
-            data.append((list_df[j], i))
+            data.append((list_df[j], i-1, 'suburban'))
 
 
     return data
@@ -280,7 +280,7 @@ def create_data_frame_tutorial(x):
         else:
             list_df = np.array_split(tempdata, 5)
             for j in range(0, len(list_df)):
-                data.append((list_df[j], i))
+                data.append((list_df[j], i-1, 'tutorial'))
 
     return data
 
@@ -312,6 +312,6 @@ def create_data_frame_urban(x):
 
         list_df = np.array_split(tempdata, 5)
         for j in range(0, len(list_df)):
-            data.append((list_df[j], i))
+            data.append((list_df[j], i-1, 'urban'))
 
     return data

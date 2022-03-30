@@ -35,25 +35,25 @@ def create_data_frames():
             tempdata = get_data(f"sample_data/user_000{str(i)}/user_000{str(i)}_{envir}.csv")
             list_df = np.array_split(tempdata, 5)
             for j in range(0, len(list_df)):
-                data.append((list_df[j], i - 1))
+                data.append((list_df[j], i - 1, envir))
     random.shuffle(data)
     return data
 
 
-def getPositive(currLabel, data, dataFrame):
+def getPositive(currLabel, data, dataFrame, type):
     foundPositive = False
     while not foundPositive:
-        randomFrame, newLabel = random.choice(data)
+        randomFrame, newLabel, newtype = random.choice(data)
         # If dataframe is positive but it is not the same
-        if newLabel == currLabel and not randomFrame.equals(dataFrame):
+        if newLabel == currLabel and type == newtype and not randomFrame.equals(dataFrame):
             return randomFrame
 
 
-def getNegative(currLabel, data):
+def getNegative(currLabel, data, type):
     foundNegative = False
     while not foundNegative:
-        randomFrame, newLabel = random.choice(data)
-        if newLabel != currLabel:
+        randomFrame, newLabel, newtype = random.choice(data)
+        if newLabel != currLabel and newtype == type:
             return randomFrame
 
 #Returns an array of k length of (xTrain, yTrain, xTest, yTest)
@@ -80,12 +80,12 @@ def trainModel(data):
     # Train for n epochs
     for i in range(epochs):
         # Loop through each data point
-        for df, j in data:
+        for df, j, t in data:
             currLabel = j
             print(j)
             # Get random
-            positive = getPositive(currLabel, data, df)
-            negative = getNegative(currLabel, data)
+            positive = getPositive(currLabel, data, df, t)
+            negative = getNegative(currLabel, data, t)
 
             optimizer.zero_grad()
             # input data
@@ -109,7 +109,7 @@ def trainModel(data):
 def pickleResults(model, data):
     testSet = []
     testLabels = []
-    for df, i in data:
+    for df, i, t in data:
         print(i)
         result = model(torch.reshape(torch.tensor(df.to_numpy()), (200, 1, 38)), df.to_numpy())
         testSet.append(result.detach().numpy().tolist())

@@ -275,7 +275,7 @@ def create_data_frame_tutorial(x):
             list_df_new.append(last)
 
             for j in range(0, len(list_df_new)):
-                data.append((list_df_new[j], i))
+                data.append((list_df_new[j], i-1, 'tutorial'))
 
         else:
             list_df = np.array_split(tempdata, 5)

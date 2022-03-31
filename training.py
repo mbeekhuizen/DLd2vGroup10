@@ -234,7 +234,6 @@ if __name__ == '__main__':
             avgAccuracy = 0
             param = {'num_leaves': random.choice(numleaves), 'num_trees': random.choice(numtrees),
                      'max_depth': random.choice(maxdepth),
-                     'reg_lambda':1,
                      'num_classes': 5, 'min_data_in_leaf': random.choice(mindatainleaf), 'max_bin': 10,
                      'objective': 'multiclass', 'verbose': -1,
                      'metric': {'multi_logloss'},

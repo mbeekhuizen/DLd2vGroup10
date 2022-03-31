@@ -2,17 +2,18 @@ import torch.nn.functional as F
 from torch import nn
 from tcn import TemporalConvNet
 import torch
-from wavelet import gen_wavelet
+from wavelet import gen_wavelet, gen_wavelet2
 
 
 class TCN(nn.Module):
 
 
-    def __init__(self, input_channels, wavelet, input_length, output_size, kernel_size, channel_lst, wavelet_output_size):
+    def __init__(self, input_channels, wavelet, input_length, output_size, kernel_size, channel_lst, wavelet_output_size, device):
         super(TCN, self).__init__()
         self.input_size = input_channels
         self.wavelet = wavelet
         self.input_length = input_length
+        self.device = device
         output_size = output_size
         kernel_size = kernel_size
         num_channels = channel_lst
@@ -32,8 +33,9 @@ class TCN(nn.Module):
             num_channels,
             kernel_size=kernel_size)
 
-        self.input_bn = nn.BatchNorm1d(63)
+        self.input_bn = nn.BatchNorm1d(55)
         self.linear = nn.Linear(linear_size, output_size)
+        self.linear2 = nn.Linear(76, 30)
 
     def forward(self, inputs, orinput):
         """Inputs have to have dimension (N, C_in, L_in)"""
@@ -42,8 +44,11 @@ class TCN(nn.Module):
         y1 = self.tcn(inputs)  # input should have dimension (N, C, L)
         last = y1[:, :, -1]
 
+
+
         if self.wavelet:
             hw1, hw2 = gen_wavelet(orinput)
+            hwt = gen_wavelet2(orinput)
             # splits = torch.split(inputs, self.input_size, dim=2)
             # inputs = splits[0]
             # wvlt_inputs = splits[1]
@@ -54,21 +59,25 @@ class TCN(nn.Module):
             #                             self.input_length // 2,
             #                             dim=0)[1]
             # bsize = inputs.size()[0]
-            wvlt_out1 = self.linear_wavelet(
-                torch.Tensor(hw1.T).type(torch.DoubleTensor))
-            wvlt_out2 = self.linear_wavelet(
-                torch.Tensor(hw2.T).type(torch.DoubleTensor))
+            # t1 = torch.Tensor(hw1.T).type(torch.DoubleTensor).to(self.device)
+            # wvlt_out1 = self.linear_wavelet(
+            #     t1)
+            # wvlt_out2 = self.linear_wavelet(
+            #     torch.Tensor(hw2.T).type(torch.DoubleTensor).to(self.device))
+            wt_out = self.linear2(torch.Tensor(hwt).type(torch.DoubleTensor).to(self.device))
 
 
 
         if self.wavelet:
-            temp1 = last[0, :]
-            temp2 = wvlt_out1[0, :]
-            temp3 = wvlt_out2[0, :]
-            last = torch.cat([temp1, temp2 , temp3])
+            # temp1 = last[-1, :]
+            # temp2 = wvlt_out1[-1, :]
+            # temp3 = wvlt_out2[0, :]
+            # last = torch.cat([temp1, temp2 , temp3])
+            last = torch.cat([last, wt_out], dim=1)
 
         # last = torch.reshape(last, (1, 63))
-        # normalized = self.input_bn(last)
+        normalized = self.input_bn(last)
         # o = self.linear(normalized)
         # return o, {'orig': last, 'pos': None, 'neg': None}
-        return last
+        # o = self.linear3(normalized.T)
+        return normalized

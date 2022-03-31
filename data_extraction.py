@@ -66,17 +66,15 @@ def get_data_without_Turn_indicators(path):
     return d.drop([d.columns[0], 'INDICATORS', 'INDICATORS_ON_INTERSECTION'], axis=1)
 
 
-
-
 def create_data_frames_by_features(x):
     data = []
     mu, sigma = 0, 0.1
     #Loop through all the users
     environments = ['highway', 'suburban', 'tutorial', 'urban']
     for i in range(1, 6):
-        if i == 3 and envir == 'tutorial':
-            continue
         for envir in environments:
+            if i == 3 and envir == 'tutorial':
+                continue
             if x == 0:
                 tempdata = get_data(f"sample_data/user_000{str(i)}/user_000{str(i)}_{envir}.csv")
             elif x == 1:
@@ -116,6 +114,4 @@ def create_data_frames_by_features(x):
     return data
 
 
-y = create_data_frames_by_features(3)
-
-print(y)
+print(create_data_frames_by_features_without_driver_3_and_tutorial(2))

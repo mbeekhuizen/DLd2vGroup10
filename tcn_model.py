@@ -33,7 +33,7 @@ class TCN(nn.Module):
             kernel_size=kernel_size)
 
         self.input_bn = nn.BatchNorm1d(63)
-        self.linear = nn.Linear(linear_size, output_size)
+        self.linear = nn.Linear(63, 63)
 
     def forward(self, inputs, orinput):
         """Inputs have to have dimension (N, C_in, L_in)"""
@@ -62,7 +62,7 @@ class TCN(nn.Module):
 
 
         if self.wavelet:
-            temp1 = last[0, :]
+            temp1 = last[-1, :]
             temp2 = wvlt_out1[0, :]
             temp3 = wvlt_out2[0, :]
             last = torch.cat([temp1, temp2 , temp3])
@@ -71,4 +71,5 @@ class TCN(nn.Module):
         # normalized = self.input_bn(last)
         # o = self.linear(normalized)
         # return o, {'orig': last, 'pos': None, 'neg': None}
-        return last
+        o = self.linear(last)
+        return o

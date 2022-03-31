@@ -15,7 +15,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
 import copy
-
+from datetime import datetime
 random.seed(25)
 
 def print_hi(name):
@@ -84,15 +84,16 @@ def trainModel(data):
     # Train for n epochs
     for i in tqdm(range(epochs)):
         # Loop through each data point
-        for df, j, t in data:
+        running_loss = 0.0
+        for df, j, t in tqdm(data):
             currLabel = j
-            print(j)
             # Get random
             positive = getPositive(currLabel, data, df, t)
             negative = getNegative(currLabel, data, t)
 
             optimizer.zero_grad()
             # input data
+
             temp = torch.tensor(df.to_numpy())
             temp2 = torch.reshape(temp, (200, 1, 38))
             model = model.double()
@@ -103,6 +104,11 @@ def trainModel(data):
             loss = criterion(orioutput, posoutput, negoutput)
             loss.backward()
             optimizer.step()
+            currentLoss = loss.item()
+            running_loss += currentLoss
+            print(f"Loss: {currentLoss}")
+
+
 
     #Save the trained tcn model
     PATH = './trainedTCNmodel.pth'
@@ -175,9 +181,6 @@ if __name__ == '__main__':
         fig = plot.get_figure()
         fig.savefig("out.png")
 
-
-
-
         maxAcc = 0
         iters = 100
         numleaves = list(range(3, 50))
@@ -195,23 +198,25 @@ if __name__ == '__main__':
             k = 7
             allFolds = kFoldCrossValidation(k, xTrain, yTrain)
             avgAccuracy = 0
+            param = {'num_leaves': random.choice(numleaves), 'num_trees': random.choice(numtrees),
+                     'max_depth': random.choice(maxdepth),
+                     'num_classes': 5, 'min_data_in_leaf': random.choice(mindatainleaf), 'max_bin': 10,
+                     'objective': 'multiclass', 'verbose': -1,
+                     'metric': {'multi_logloss'},
+                     }
             for fold in allFolds:
                 #Train classifier on current fold
 
 
                 classifierTrain = lgb.Dataset(fold[0], label=fold[1])
-                param = {'num_leaves': random.choice(numleaves), 'num_trees': random.choice(numtrees), 'max_depth': random.choice(maxdepth),
-                         'num_classes': 5, 'min_data_in_leaf': random.choice(mindatainleaf), 'max_bin': 10,
-                         'objective': 'multiclass', 'verbose': -1,
-                         'metric': {'multi_logloss'},
-                         }
+                bst = lgb.train(param, classifierTrain)
                 # param = {'num_leaves': 31, 'num_trees': 100,
                 #          'max_depth': 12,
                 #          'num_classes': 5, 'min_data_in_leaf': 1,
                 #          'objective': 'multiclass', 'verbose': -1,
                 #          'metric': {'multi_logloss'},
                 #          }
-                bst = lgb.train(param, classifierTrain)
+
                 #Evaluate classifier on current fold
                 accuracy = 0
 

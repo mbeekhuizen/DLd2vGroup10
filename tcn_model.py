@@ -33,9 +33,11 @@ class TCN(nn.Module):
             num_channels,
             kernel_size=kernel_size)
 
-        self.input_bn = nn.BatchNorm1d(55)
-        self.linear = nn.Linear(linear_size, output_size)
         self.linear2 = nn.Linear(76, 30)
+
+        self.input_bn = nn.BatchNorm1d(63)
+        self.linear = nn.Linear(63, 63)
+
 
     def forward(self, inputs, orinput):
         """Inputs have to have dimension (N, C_in, L_in)"""
@@ -75,9 +77,12 @@ class TCN(nn.Module):
             # last = torch.cat([temp1, temp2 , temp3])
             last = torch.cat([last, wt_out], dim=1)
 
+
         # last = torch.reshape(last, (1, 63))
         normalized = self.input_bn(last)
         # o = self.linear(normalized)
         # return o, {'orig': last, 'pos': None, 'neg': None}
+
         # o = self.linear3(normalized.T)
         return normalized
+

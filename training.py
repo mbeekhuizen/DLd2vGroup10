@@ -15,7 +15,7 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
 import copy
-
+from datetime import datetime
 random.seed(25)
 
 def print_hi(name):
@@ -91,9 +91,9 @@ def trainModel(data):
     # Train for n epochs
     for i in tqdm(range(epoch)):
         # Loop through each data point
+        running_loss = 0.0
         for df, j, t in tqdm(data):
             currLabel = j
-            #print(j)
             # Get random
             positive = getPositive(currLabel, data, df, t)
             negative = getNegative(currLabel, data, t)
@@ -101,6 +101,7 @@ def trainModel(data):
             optimizer.zero_grad()
             # input data
             temp = torch.tensor(df.to_numpy()).to(device)
+
             temp2 = torch.reshape(temp, (200, 1, 38))
             model = model.double()
             orioutput = model(temp2, df.to_numpy())
@@ -110,6 +111,7 @@ def trainModel(data):
             loss = criterion(orioutput, posoutput, negoutput)
             loss.backward()
             optimizer.step()
+
             print(loss.item())
             avgLoss += loss.item()
         avgLoss = avgLoss / len(data)
@@ -121,7 +123,6 @@ def trainModel(data):
         plt.show()
         fig = plot.get_figure()
         fig.savefig(f"losses{i}.png")
-
 
 
     #Save the trained tcn model
@@ -214,9 +215,6 @@ if __name__ == '__main__':
         fig = plot.get_figure()
         fig.savefig("out.png")
 
-
-
-
         maxAcc = 0
         iters = 100
         numleaves = list(range(3, 50))
@@ -245,6 +243,14 @@ if __name__ == '__main__':
                 #Train classifier on current fold
                 classifierTrain = lgb.Dataset(fold[0], label=fold[1])
                 bst = lgb.train(param, classifierTrain)
+
+                # param = {'num_leaves': 31, 'num_trees': 100,
+                #          'max_depth': 12,
+                #          'num_classes': 5, 'min_data_in_leaf': 1,
+                #          'objective': 'multiclass', 'verbose': -1,
+                #          'metric': {'multi_logloss'},
+                #          }
+
                 #Evaluate classifier on current fold
                 accuracy = 0
 

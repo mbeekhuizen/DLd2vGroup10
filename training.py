@@ -14,6 +14,7 @@ from tqdm import tqdm
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 import seaborn as sns
+from data_extraction import create_data_frames_by_features
 import copy
 from datetime import datetime
 random.seed(25)
@@ -75,11 +76,13 @@ def kFoldCrossValidation(k, x, y):
     return allFolds
 
 #Trains the TCN model with 3/5 (user data) for each environment for each user. This results in 3 * 4 envir * 5 users = 60 data elements
-def trainModel(data):
+def trainModel(data, nfeatures):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
     print(torch.version.cuda)
-    model = TCN(38, True, 200, 32, 16, '25,25,25,25,25,25,25,25', 19, device)
+    #Change paramater to the total number of input features
+
+    model = TCN(nfeatures, True, 200, 32, 16, '25,25,25,25,25,25,25,25', 19, device)
     model.to(device)
     # model = TCN(39, False, 200, 5, 16, '32,32,32,32,32,32,32,32', 15)
     criterion = nn.TripletMarginLoss(margin=1, p=2)
@@ -102,11 +105,11 @@ def trainModel(data):
             # input data
             temp = torch.tensor(df.to_numpy()).to(device)
 
-            temp2 = torch.reshape(temp, (200, 1, 38))
+            temp2 = torch.reshape(temp, (200, 1, nfeatures))
             model = model.double()
             orioutput = model(temp2, df.to_numpy())
-            posoutput = model(torch.reshape(torch.tensor(positive.to_numpy()).to(device), (200, 1, 38)), positive.to_numpy())
-            negoutput = model(torch.reshape(torch.tensor(negative.to_numpy()).to(device), (200, 1, 38)), negative.to_numpy())
+            posoutput = model(torch.reshape(torch.tensor(positive.to_numpy()).to(device), (200, 1, nfeatures)), positive.to_numpy())
+            negoutput = model(torch.reshape(torch.tensor(negative.to_numpy()).to(device), (200, 1, nfeatures)), negative.to_numpy())
 
             loss = criterion(orioutput, posoutput, negoutput)
             loss.backward()
@@ -126,17 +129,17 @@ def trainModel(data):
 
 
     #Save the trained tcn model
-    PATH = './trainedTCNmodelH.pth'
+    PATH = './trainedTCNmodelAccBreak.pth'
     torch.save(model.state_dict(), PATH)
     return model
 
 #Stores the results of the tcn model when running the whole dataset on it.
-def pickleResults(model, data, device):
+def pickleResults(model, data, device, nfeatures):
     testSet = []
     testLabels = []
     for df, i, t in data:
         print(i)
-        result = model(torch.reshape(torch.tensor(df.to_numpy()).to(device), (200, 1, 38)), df.to_numpy())
+        result = model(torch.reshape(torch.tensor(df.to_numpy()).to(device), (200, 1, nfeatures)), df.to_numpy())
         testSet.append(result.detach().cpu().numpy().tolist())
         testLabels.append(i)
 
@@ -158,33 +161,35 @@ if __name__ == '__main__':
 
 
     #TODO create training split and test split
-    data = create_data_frames()
-    len(data)
-    train_data = data[:70]
-    test_data = data[70:]
+    #data = create_data_frames()
+    data2 = create_data_frames_by_features(4)
+    nfeatures = 34
+    #len(data)
+    train_data = data2[:70]
+    test_data = data2[70:]
 
 
 
     #Train the model
     if sys.argv[1] == 'tcn':
-        model = trainModel(train_data)
+        model = trainModel(train_data, nfeatures)
 
 
 
     if sys.argv[1] == 'pickle':
         #Load the model and pickle output
-        PATH = './trainedTCNmodelH.pth'
+        PATH = './trainedTCNmodelAccBreak.pth'
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        model = TCN(38, True, 200, 32, 16, '25,25,25,25,25,25,25,25', 19, device)
+        model = TCN(nfeatures, True, 200, 32, 16, '25,25,25,25,25,25,25,25', 19, device)
         model.load_state_dict(torch.load(PATH))
         model = model.double()
         model.to(device)
-        pickleResults(model, data, device)
+        pickleResults(model, data2, device, nfeatures)
 
 
     if sys.argv[1] == 'test':
         #load trained classifier and testing data
-        bst = lgb.Booster(model_file='./classifierModelH.txt')
+        bst = lgb.Booster(model_file='./classifierModelAccBreak.txt')
         with open('pickle/xTrain.pkl', 'rb') as f:
             xTest = pkl.load(f)[70:,-1,:]
         with open('pickle/yTrain.pkl', 'rb') as f:
@@ -266,7 +271,7 @@ if __name__ == '__main__':
                 print(f"Params: {param}")
                 maxAcc = avgAccuracy
                 # Save classifier model
-                bst.save_model('./classifierModelH.txt')
+                bst.save_model('./classifierModelAccBreak.txt')
             print(f"{i}, {avgAccuracy}")
 
         print(f"Best avg accuracy was {maxAcc}")

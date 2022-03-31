@@ -33,10 +33,10 @@ class TCN(nn.Module):
             num_channels,
             kernel_size=kernel_size)
 
-        self.linear2 = nn.Linear(76, 30)
+        self.linear2 = nn.Linear(2*input_channels, 30)
 
-        self.input_bn = nn.BatchNorm1d(63)
-        self.linear = nn.Linear(63, 63)
+        self.input_bn = nn.BatchNorm1d(55)
+
 
 
     def forward(self, inputs, orinput):
@@ -49,7 +49,6 @@ class TCN(nn.Module):
 
 
         if self.wavelet:
-            hw1, hw2 = gen_wavelet(orinput)
             hwt = gen_wavelet2(orinput)
             # splits = torch.split(inputs, self.input_size, dim=2)
             # inputs = splits[0]

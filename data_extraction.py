@@ -14,11 +14,11 @@ def get_data(path):
     d = pd.read_csv(path)
     return d.drop(d.columns[0], axis=1)
 
-# 8 features, argu=1
+# 30 features, argu=1
 def get_data_with_highway_speed_acceleration_only(path):
     d = pd.read_csv(path)
-    return d[['ACCELERATION', 'ACCELERATION_PEDAL', 'ACCELERATION_Z', 'SPEED', 'SPEED_LIMIT', 'SPEED_NEXT_VEHICLE',
-              'SPEED_Y', 'SPEED_Z']]
+    return d.drop([d.columns[0], 'ACCELERATION', 'ACCELERATION_PEDAL', 'ACCELERATION_Z', 'SPEED', 'SPEED_LIMIT', 'SPEED_NEXT_VEHICLE',
+              'SPEED_Y', 'SPEED_Z'], axis=1)
 
 # 32 features, argu=2
 def get_data_without_distance_information(path):

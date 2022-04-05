@@ -6,8 +6,6 @@ def gen_wavelet(data):
     nrow = data.shape[0]
     cur_col = data[:, 0].copy()
     (cA, cD) = pywt.dwt(cur_col, 'haar')
-    # new_col1 = np.reshape(cA,(nrow/2,1))
-    # new_col2 = np.reshape(cA, (nrow/ 2, 1))
     vector1 = np.reshape(cA, (len(cA), 1))
     vector2 = np.reshape(cD, (len(cD), 1))
 
@@ -19,7 +17,7 @@ def gen_wavelet(data):
     return vector1, vector2
 
 
-def gen_wavelet2(data):
+def gen_waveletConCat(data):
     ncol = data.shape[1]
     nrow = data.shape[0]
     for i in range(ncol):

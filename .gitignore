@@ -1,2 +1,5 @@
 .idea
 venv
+*.pth
+*.png
+*.txt
